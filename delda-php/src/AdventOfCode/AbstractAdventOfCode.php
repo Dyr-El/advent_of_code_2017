@@ -6,12 +6,12 @@ abstract class AbstractAdventOfCode
 {
     protected $input;
 
-    abstract function firstPart(): string;
-    abstract function secondPart(): string;
+    abstract public function firstPart(): string;
+    abstract public function secondPart(): string;
 
     public function __construct($input = null)
     {
-        if (!$input) {
+        if (is_null($input)) {
             $input = file_get_contents(__DIR__.'/../Resources/Day'.$this->class.'Input');
         }
         $this->input = $input;

@@ -2,9 +2,21 @@ from os import fsencode, fsdecode, listdir, system, name
 from io import StringIO
 from contextlib import redirect_stdout
 
+four_spaces = '    '
 path = 'estomagordo-python3\\'
 golf = 'golf\\'
 readme = 'README.md'
+
+def tabbify(s):
+    while four_spaces in s:
+        s = s.replace(four_spaces, '\t')
+    return s
+
+def custom_sort(fsfile):
+    numend = 0
+    while fsfile[numend].isnumeric():
+        numend += 1
+    return (int(fsfile[:numend]), fsfile[numend:])
 
 rm = []
 with open(path + golf + readme, 'r') as f:
@@ -15,8 +27,9 @@ system('cls' if name == 'nt' else 'clear')
 print("Welcome to the golfing experience part of estomagordo's 2017 Advent of Code submissions!\nThe following golfing solutions have been found.")
 
 results = []
+fsfiles = sorted([f for f in listdir(path + golf) if f.endswith('.py')], key = lambda fsfile: custom_sort(fsfile))
 
-for f in listdir(path + golf):
+for f in fsfiles:
     out = StringIO()
 
     filename = fsdecode(f)
@@ -27,6 +40,10 @@ for f in listdir(path + golf):
 
     with open(path + golf + filename, 'r') as golfed:
         contents = golfed.read()
+
+        result.append(four_spaces in contents)
+        contents = tabbify(contents)
+        result.append(contents)
         
         with redirect_stdout(out):
             exec(contents)
@@ -48,12 +65,15 @@ for f in listdir(path + golf):
     results.append(result)
 
 for result in results:
-    name, golflen, golfsult, regulen, regusult = result
-    eqstr = 'EQUALS' if golfsult == regusult else 'DOES NOT EQUAL'
+    name, shortened, file_raw, golflen, golfsult, regulen, regusult = result
+    equals = golfsult == regusult
+    eqstr = 'EQUALS' if equals else 'DOES NOT EQUAL'
     percentage = round(100.0 * float(golflen) / float(regulen), 2)
 
-    output = '\n{}\nGolfed result {} the regular result. The solution was shortened from {} to {} chars, or {}% of the original.'.format(
-        name, eqstr, str(regulen), str(golflen), percentage)
+    output = 'Golfed result {} the regular result. The solution was shortened from {} to {} chars, or {}% of the original.'.format(
+        eqstr, str(regulen), str(golflen), percentage)
+
+    newconsoutput = '\n' + name + '\n' + output
 
     namenl = name + '\n'
     
@@ -68,12 +88,16 @@ for result in results:
         resultstr = prevresult[topos + 4: charspos]
         oldlen = int(resultstr)
 
-        if golflen < oldlen:
+        if golflen < oldlen and equals:
             rm[i] = output
     else:
-        rm.append(output + '\n')
+        rm.append(newconsoutput + '\n')
 
-    print(output)
+    if shortened:
+        with open(path + golf + filename, 'w') as f:
+            f.write(file_raw)
+
+    print(newconsoutput)
 
 if rm[-1][-1] == '\n':
     rm[-1] = rm[-1][:-1]
